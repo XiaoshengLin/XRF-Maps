@@ -89,7 +89,7 @@ private:
 
     size_t _max_iter;
 
-    nsNNLS::matrix* _fitmatrix;
+    nsNNLS::matrix<real_t>* _fitmatrix;
 
     std::unordered_map<std::string, int> _element_row_index;
 

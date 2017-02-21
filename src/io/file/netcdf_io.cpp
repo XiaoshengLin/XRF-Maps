@@ -96,7 +96,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, header_size};
     ptrdiff_t stride[] = {1, 1, 1};
-    double data_in[1][1][5000];
+    real_t data_in[1][1][5000];
     size_t num_cols;
     size_t spectra_size;
 
@@ -125,9 +125,13 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         if( retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) )
             ERR(retval);
     }
-
+#if defined _REAL_FLOAT
+	if (retval = nc_get_vars_float(ncid, varid, start, count, stride, &data_in[0][0][0]))
+		ERR(retval);
+#elif defined _REAL_DOUBLE
     if( retval = nc_get_vars_double(ncid, varid, start, count, stride, &data_in[0][0][0]) )
        ERR(retval);
+#endif
 
     if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
     {
@@ -153,9 +157,13 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
         count[2] = header_size;
         //read header
+#if defined _REAL_FLOAT
+		if (retval = nc_get_vars_float(ncid, varid, start, count, stride, &data_in[0][0][0]))
+			ERR(retval);
+#elif defined _REAL_DOUBLE
         if( retval = nc_get_vars_double(ncid, varid, start, count, stride, &data_in[0][0][0]) )
            ERR(retval);
-
+#endif
         header_size = data_in[0][0][2];
 
         unsigned short i1 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)];
@@ -198,10 +206,13 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
         start[2] += header_size + (spectra_size * detector);
         count[2] = spectra_size;
-
+#if defined _REAL_FLOAT
+		if (retval = nc_get_vars_float(ncid, varid, start, count, stride, &data_in[0][0][0]))
+			ERR(retval);
+#elif defined _REAL_DOUBLE
         if( retval = nc_get_vars_double(ncid, varid, start, count, stride, &data_in[0][0][0]) )
            ERR(retval);
-
+#endif
         for(size_t k=0; k<spectra_size; k++)
         {
             (*spec_line)[j][k] = data_in[0][0][k];

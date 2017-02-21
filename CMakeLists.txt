@@ -113,10 +113,18 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
 include(CheckCXXCompilerFlag)
 
+option(USE_DOUBLE_PRECISION "Use Double Precision" ON)
+
+IF (USE_DOUBLE_PRECISION)
+	add_definitions(-D_REAL_DOUBLE)
+ELSE()
+	add_definitions(-D_REAL_FLOAT)
+ENDIF()
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   # Enable C++11 mode on C++ / Clang
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D_REAL_DOUBLE -fPIC -g")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D_REAL_DOUBLE -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -fPIC -g")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -fPIC")
 
   # Enable link time optimization and set the default symbol
   # visibility to hidden (very important to obtain small binaries)
@@ -139,7 +147,7 @@ if(MSVC)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D_REAL_DOUBLE /DNOMINMAX")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /DNOMINMAX")
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
@@ -254,8 +262,6 @@ add_library(libxrf_fit SHARED
     src/support/lmfit_6.1/lmmin.c
     src/support/lmfit_6.1/lmcurve_tyd.c
     src/support/lmfit_6.1/lmcurve.c
-    src/support/nnls/nnls.cc
-    src/support/nnls/denseMatrix.cc
     src/data_struct/xrf/quantification_standard.cpp
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp

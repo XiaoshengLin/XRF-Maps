@@ -65,8 +65,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #if defined _REAL_FLOAT
   #define real_t float
+  #define h5_real_t H5T_NATIVE_FLOAT
 #elif defined _REAL_DOUBLE
   #define real_t double
+  #define h5_real_t H5T_NATIVE_DOUBLE
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__

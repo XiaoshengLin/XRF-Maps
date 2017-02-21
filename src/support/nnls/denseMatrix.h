@@ -21,85 +21,123 @@
 #ifndef _MY_DENSE_H
 #define _MY_DENSE_H
 
+#include "defines.h"
 #include "matrix.h"
 #include <cassert>
+
+
+#ifdef _HAVE_CBLAS
+#include <cblas.h>
+#endif 
 
 namespace nsNNLS {
 
 #define forall(x) for (size_t x = 0; x < size; x++)
-
-  class denseMatrix : public matrix {
+	template<typename _T>
+  class denseMatrix : public matrix<_T> {
     size_t size;
-    double* data;
+    _T* data;
     bool external;              // is data managed externally
   public:
     denseMatrix() { external = true; data = 0;}
 
     denseMatrix (size_t r, size_t c) : matrix(r, c) { 
       assert (r > 0 && c > 0);
-      data = new double[r*c];
+      data = new _T[r*c];
       size = r*c;
       external = false;
     }
 
     ~denseMatrix () { if (!external) delete[] data;}
     
-    denseMatrix(size_t r, size_t c, double* data) : matrix(r, c) 
+    denseMatrix(size_t r, size_t c, _T* data) : matrix(r, c) 
     { external = true; size=r*c; this->data=data;}
 
-    int load(const char* fn, bool asbin);
-
-  private:
-    int load_as_bin(const char*);
-    int load_as_txt(const char*);
   public:
     /// Get the (i,j) entry of the matrix
-    double operator()   (size_t i, size_t j) { return data[i*ncols()+j];}
+    _T operator()   (size_t i, size_t j) { return data[i*ncols()+j];}
 
     /// Get the (i,j) entry of the matrix
-    double get (size_t i, size_t j) { return data[i*ncols()+j];}
+    _T get (size_t i, size_t j) { return data[i*ncols()+j];}
 
     /// Set the (i,j) entry of the matrix. Not all matrices can support this.
-    int set (size_t i, size_t j, double val) { data[i*ncols()+j] = val; return 0;}
+    int set (size_t i, size_t j, _T val) { data[i*ncols()+j] = val; return 0;}
     
     
     /// Returns 'r'-th row into pre-alloced vector
-    int get_row (size_t, vector*&);
+    int get_row (size_t, vector<_T>*&) { return -1; }
     /// Returns 'c'-th col as a vector
-    int get_col (size_t, vector*&);
+    int get_col (size_t, vector<_T>*&) { return -1; }
     /// Returns main or second diagonal (if p == true)
-    int get_diag(bool p, vector*& d);
+    int get_diag(bool p, vector<_T>*& d) { return -1; }
     
     /// Sets the specified row to the given vector
-    int set_row(size_t r, vector*&);
+    int set_row(size_t r, vector<_T>*&) { return -1; }
     /// Sets the specified col to the given vector
-    int set_col(size_t c, vector*&);
+    int set_col(size_t c, vector<_T>*&) { return -1; }
     /// Sets the specified diagonal to the given vector
-    int set_diag(bool p, vector*&);
+    int set_diag(bool p, vector<_T>*&) { return -1; }
 
     /// Vector l_p norms for this matrix, p > 0
-    double norm (double p);
+    _T norm (_T p) { return -1; }
     /// Vector l_p norms, p is 'l1', 'l2', 'fro', 'inf'
-    double norm (const char*  p);
+    _T norm (const char*  p) { return -1; }
 
     /// Apply an arbitrary function elementwise to this matrix. Changes the matrix.
-    int apply (double (* fn)(double)) { forall(i) data[i] = fn(data[i]); return 0;};
+    int apply (_T (* fn)(_T)) { forall(i) data[i] = fn(data[i]); return 0;};
 
     /// Scale the matrix so that x_ij := s * x_ij
-    int scale (double s) { forall(i) data[i] *= s; return 0;}
+    int scale (_T s) { forall(i) data[i] *= s; return 0;}
 
     /// Adds a const 's' so that x_ij := s + x_ij
-    int add_const(double s) { forall(i) data[i] += s; return 0;};
+    int add_const(_T s) { forall(i) data[i] += s; return 0;};
 
     /// r = a*row(i) + r
-     int    row_daxpy(size_t i, double a, vector* r);
+     int    row_daxpy(size_t i, _T a, vector<_T>* r) { return -1; }
     /// c = a*col(j) + c
-     int  col_daxpy(size_t j, double a, vector* c);
+     int  col_daxpy(size_t j, _T a, vector<_T>* c) { return -1; }
 
     /// Let r := this * x or  this^T * x depending on tranA
-    int dot (bool transp, vector* x, vector*r);
+    int dot (bool transp, vector<_T>* x, vector<_T>*r)
+	{
+		// Replace by call to BLAS library, in case it is available; otherwise
+		// the under-optimized code below will be invoked
 
-    size_t memoryUsage() { return nrows()*ncols()*sizeof(double);}
+#ifdef _HAVE_CBLAS
+		if (transp)
+			cblas_dgemv(CblasRowMajor, CblasTrans, nrows(), ncols(),
+				1.0, data, ncols(), x->getData(), 1, 0.0, r->getData(), 1);
+		else
+			cblas_dgemv(CblasRowMajor, CblasNoTrans, nrows(), ncols(),
+				1.0, data, ncols(), x->getData(), 1, 0.0, r->getData(), 1);
+#else
+		_T* pr = r->getData();
+		_T* px = x->getData();
+		_T* rp;
+		// M*x
+		if (!transp) {
+			r->zeroOut();
+			for (size_t i = 0; i < nrows(); i++) {
+				rp = &data[i*ncols()];
+				for (size_t j = 0; j < ncols(); j++) {
+					pr[i] += rp[j] * px[j];
+				}
+			}
+		}
+		else {                      // M'*x
+			r->zeroOut();
+			for (size_t i = 0; i < nrows(); i++) {
+				rp = &data[i*ncols()];
+				for (size_t j = 0; j < ncols(); j++) {
+					pr[j] += rp[j] * px[i];
+				}
+			}
+		}
+#endif
+		return 0;
+	}
+
+    size_t memoryUsage() { return nrows()*ncols()*sizeof(_T);}
   };
 }
 
