@@ -78,23 +78,27 @@ std::vector<T> conv_valid(std::vector<T> const &f, std::vector<T> const &g)
 	return out;
 }
 
-std::valarray<real_t> convolve1d( std::valarray<real_t> arr, size_t boxcar_size)
+std::valarray<real_t> convolve1d( EArrayXr &arr, size_t boxcar_size)
 {
-    std::valarray<real_t> boxcar(1.0, boxcar_size);
+    EArrayXr boxcar;
+    boxcar.resize(boxcar_size);
+    boxcar.setOnes(boxcar_size);
     return convolve1d(arr, boxcar);
 }
 
-std::valarray<real_t> convolve1d( std::valarray<real_t> arr, std::valarray<real_t> boxcar)
+std::valarray<real_t> convolve1d( EArrayXr &arr, EArrayXr &boxcar)
 {
     std::valarray<real_t> new_background((real_t)0.0, arr.size());
     //convolve 1d
 
     size_t const nf = arr.size();
 	size_t const ng = boxcar.size();
-    std::valarray<real_t> const &min_v = (nf < ng)? arr : boxcar;
-    std::valarray<real_t> const &max_v = (nf < ng)? boxcar : arr;
+    EArrayXr const &min_v = (nf < ng)? arr : boxcar;
+    EArrayXr const &max_v = (nf < ng)? boxcar : arr;
 	size_t const n  = std::max(nf, ng) - std::min(nf, ng) + 1;
-    std::valarray<real_t> out((real_t)0.0, n);
+    EArrayXr out;
+    out.resize(n);
+    out *= 0.0;
     for(auto i(0); i < n; ++i)
     {
         for(int j(min_v.size() - 1), k(i); j >= 0; --j)
@@ -111,19 +115,6 @@ std::valarray<real_t> convolve1d( std::valarray<real_t> arr, std::valarray<real_
         }
     }
 
-
-    /*
-    for(size_t i=0; i< arr.size(); i++)
-    {
-        new_background[i] = 0.0;
-        for (size_t j=0; j<boxcar.size(); j++)
-        {
-            if( (i-j) >= 0 )
-                new_background[i] += arr[i-j] * boxcar[j];
-        }
-    }
-    new_background /= real_t(boxcar.size());
-    */
     return new_background;
 }
 

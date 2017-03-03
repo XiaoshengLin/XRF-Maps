@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SPECTRA_H
 
 #include "defines.h"
-#include <valarray>
+#include "Eigen/Core"
 
 namespace data_struct
 {
@@ -58,13 +58,13 @@ namespace xrf
 {
 
 template<typename _T>
-class Spectra_T : public std::valarray< _T >
+class Spectra_T : public Eigen::Array< _T , Eigen::Dynamic, 1 >
 {
 public:
     /**
      * @brief Spectra : Constructor
      */
-	Spectra_T() : std::valarray<_T>()
+    Spectra_T() : Eigen::Array< _T , Eigen::Dynamic, 1 >()
 	{
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
@@ -72,7 +72,7 @@ public:
 		_output_counts = 1.0;
 	}
 
-	Spectra_T(size_t sample_size) : std::valarray<_T>(0.0, sample_size)
+    Spectra_T(size_t sample_size) : Eigen::Array< _T , Eigen::Dynamic, 1 >(0.0, sample_size)
 	{
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
@@ -121,8 +121,10 @@ private:
 template DLL_EXPORT class Spectra_T<real_t>;
 typedef Spectra_T<real_t> Spectra;
 
-std::valarray<real_t> convolve1d(std::valarray<real_t> arr, size_t boxcar_size);
-std::valarray<real_t> convolve1d(std::valarray<real_t> arr, std::valarray<real_t> boxcar);
+typedef Eigen::Array<real_t, Eigen::Dynamic, 1> EArrayXr;
+
+std::valarray<real_t> convolve1d(EArrayXr &arr, size_t boxcar_size);
+std::valarray<real_t> convolve1d(EArrayXr &arr, EArrayXr &boxcar);
 std::valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
 
 } //namespace xrf
