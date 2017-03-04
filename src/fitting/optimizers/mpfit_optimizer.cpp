@@ -95,14 +95,14 @@ int gen_residuals_mpfit(int m, int params_size, double *params, double *dy, doub
     ud->fit_parameters->from_array(params, params_size);
 
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->func(ud->fit_parameters, ud->energy_range);
+    ud->func(ud->fit_parameters, ud->energy_range, &(ud->spectra_model));
 
     //Calculate residuals
-    EArrayXr residuals = ( (*ud->spectra) - spectra_model ) * ud->weights;
+    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
 
     for (int i=0; i<m; i++)
     {
-        dy[i] = residuals(i);
+        dy[i] = ud->residuals(i);
     }
 
     return 0;
@@ -318,7 +318,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     const Spectra * const spectra,
-                                    std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func)
+									Gen_Func_Def gen_func)
 {
     Gen_User_Data ud;
 

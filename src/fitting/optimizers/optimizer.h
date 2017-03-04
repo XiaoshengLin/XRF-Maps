@@ -70,6 +70,8 @@ using namespace fitting::models;
 
 enum OPTIMIZER_INFO { IMPROPER_INPUT, MOST_TOL, EXCEED_CALL, TOL_TOO_SMALL, NO_PROGRESS };
 
+typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
+
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
  */
@@ -82,7 +84,8 @@ struct User_Data
 	EArrayXr *spectra_background;
     Fit_Element_Map_Dict *elements;
     Range *energy_range;
-    //Fit_Counts_Array* counts_arr;
+	EArrayXr residuals;
+	Spectra  spectra_model;
 };
 
 struct Gen_User_Data
@@ -91,7 +94,9 @@ struct Gen_User_Data
 	EArrayXr weights;
     Fit_Parameters *fit_parameters;
     Range *energy_range;
-    std::function<const Spectra(Fit_Parameters*, Range*)> func;
+	Gen_Func_Def func;
+	EArrayXr residuals;
+	Spectra  spectra_model;
 };
 
 struct Quant_User_Data
@@ -110,7 +115,7 @@ void fill_user_data(User_Data &ud,
 void fill_gen_user_data(Gen_User_Data &ud,
 						Fit_Parameters *fit_params,
 						const Spectra * const spectra,
-						std::function<const Spectra(const Fit_Parameters * const, const Range * const)> gen_func);
+						Gen_Func_Def gen_func);
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
@@ -129,7 +134,7 @@ public:
 
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func) = 0;
+								Gen_Func_Def gen_func) = 0;
 
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,

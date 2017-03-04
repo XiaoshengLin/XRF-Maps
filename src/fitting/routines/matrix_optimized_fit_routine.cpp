@@ -75,10 +75,12 @@ Matrix_Optimized_Fit_Routine::~Matrix_Optimized_Fit_Routine()
 
 // --------------------------------------------------------------------------------------------------------------------
 
-Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const fit_params,
-                                                     const struct Range * const energy_range)
+void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const fit_params,
+													const struct Range * const energy_range,
+													Spectra *spectra_model)
 {
-    Spectra spectra_model(energy_range->count());
+//    Spectra spectra_model(energy_range->count());
+	spectra_model->setZero(spectra_model->size());
 
 //    valarray<real_t> energy((real_t)0.0, energy_range.count());
 //    real_t e_val = energy_range.min;
@@ -114,7 +116,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
         if(fit_params->contains(itr.first))
         {
             Fit_Param param = fit_params->at(itr.first);
-            spectra_model += pow((real_t)10.0, param.value) * itr.second;
+			(*spectra_model) += pow((real_t)10.0, param.value) * itr.second;
         }
     }
 
@@ -146,7 +148,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
 */
 //   *counts += _background_counts;
 
-    return spectra_model;
+//    return spectra_model;
 }
 
 // ----------------------------------------------------------------------------
@@ -266,7 +268,7 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 
     if(_optimizer != nullptr)
     {
-        std::function<const Spectra(const Fit_Parameters * const, const  Range * const)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2);
+        std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
         _optimizer->minimize_func(&fit_params, spectra, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)

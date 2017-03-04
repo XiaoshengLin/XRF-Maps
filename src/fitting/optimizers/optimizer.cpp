@@ -82,12 +82,15 @@ void fill_user_data(User_Data &ud,
 	ud.weights = convolve1d(ud.weights, 5);
 	ud.weights = ud.weights.abs();
 	ud.weights /= ud.weights.maxCoeff();
+
+	ud.residuals.resize(spectra->size());
+	ud.spectra_model.resize(spectra->size());
 }
 
 void fill_gen_user_data(Gen_User_Data &ud,
 						Fit_Parameters *fit_params,
 						const Spectra * const spectra,
-						std::function<const Spectra(const Fit_Parameters * const, const Range * const)> gen_func)
+						Gen_Func_Def gen_func)
 {
 	ud.func = gen_func;
 	// set spectra to fit
@@ -105,6 +108,8 @@ void fill_gen_user_data(Gen_User_Data &ud,
 	ud.weights = ud.weights.abs();
 	ud.weights /= ud.weights.maxCoeff();
 
+	ud.residuals.resize(spectra->size());
+	ud.spectra_model.resize(spectra->size());
 }
 
 } //namespace optimizers

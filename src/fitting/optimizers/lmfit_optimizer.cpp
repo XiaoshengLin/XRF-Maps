@@ -72,13 +72,13 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, *(ud->energy_range));
+    ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, *(ud->energy_range));
     //Calculate residuals
-	EArrayXr residuals = ( (*ud->spectra) - spectra_model ) * ud->weights;
+	ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
 
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = residuals(i);
+        fvec[i] = ud->residuals(i);
     }
 
 }
@@ -92,13 +92,13 @@ void general_residuals_lmfit( const double *par, int m_dat, const void *data, do
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->func(ud->fit_parameters, ud->energy_range);
+    ud->func(ud->fit_parameters, ud->energy_range, &(ud->spectra_model));
     //Calculate residuals
-	EArrayXr residuals = ( (*ud->spectra) - spectra_model ) * ud->weights;
+	ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
 
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = residuals(i);
+        fvec[i] = ud->residuals(i);
     }
 
 }
@@ -252,7 +252,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     const Spectra * const spectra,
-                                    std::function<const Spectra(const Fit_Parameters * const, const Range * const)> gen_func)
+                                    Gen_Func_Def gen_func)
 {
 
     Gen_User_Data ud;
