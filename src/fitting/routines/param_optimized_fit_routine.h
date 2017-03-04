@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "base_fit_routine.h"
 #include "optimizer.h"
 #include "fit_parameters.h"
-#include <valarray>
 
 namespace fitting
 {

@@ -78,7 +78,7 @@ std::vector<T> conv_valid(std::vector<T> const &f, std::vector<T> const &g)
 	return out;
 }
 
-std::valarray<real_t> convolve1d( EArrayXr &arr, size_t boxcar_size)
+EArrayXr convolve1d( EArrayXr &arr, size_t boxcar_size)
 {
     EArrayXr boxcar;
     boxcar.resize(boxcar_size);
@@ -86,9 +86,11 @@ std::valarray<real_t> convolve1d( EArrayXr &arr, size_t boxcar_size)
     return convolve1d(arr, boxcar);
 }
 
-std::valarray<real_t> convolve1d( EArrayXr &arr, EArrayXr &boxcar)
+EArrayXr convolve1d( EArrayXr &arr, EArrayXr &boxcar)
 {
-    std::valarray<real_t> new_background((real_t)0.0, arr.size());
+	EArrayXr new_background;
+	new_background.resize(arr.size());
+	new_background.setZero(arr.size());
     //convolve 1d
 
     size_t const nf = arr.size();
@@ -98,27 +100,27 @@ std::valarray<real_t> convolve1d( EArrayXr &arr, EArrayXr &boxcar)
 	size_t const n  = std::max(nf, ng) - std::min(nf, ng) + 1;
     EArrayXr out;
     out.resize(n);
-    out *= 0.0;
+	out.setZero(n);
     for(auto i(0); i < n; ++i)
     {
         for(int j(min_v.size() - 1), k(i); j >= 0; --j)
         {
-            out[i] += min_v[j] * max_v[k];
+            out(i) += min_v(j) * max_v(k);
             ++k;
         }
     }
-    for(size_t i=0; i< arr.size(); i++)
+    for(size_t i=0; i< n; i++)
     {
-        if( out[i] != (real_t)0.0)
+        if( out(i) != (real_t)0.0)
         {
-            new_background[i] = out[i] / real_t(boxcar.size());
+            new_background(i) = out(i) / real_t(boxcar.size());
         }
     }
 
     return new_background;
 }
 
-std::valarray<real_t> snip_background(const Spectra* const spectra,
+EArrayXr snip_background(const Spectra* const spectra,
 									  real_t energy_offset,
 									  real_t energy_linear,
 									  real_t energy_quadratic,
@@ -127,18 +129,18 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 									  real_t xmin,
 									  real_t xmax)
 {
-	std::valarray<real_t> energy;
-	std::valarray<real_t> index;
-	std::valarray<real_t> background;
+	EArrayXr energy;
+	EArrayXr index;
+	EArrayXr background;
 	size_t buffer_size = spectra->size();
 	energy.resize(buffer_size);
 	index.resize(buffer_size);
 	background.resize(buffer_size);
 	for (size_t i = 0; i < buffer_size; i++)
 	{
-		background[i] = (*spectra)[i];
-		energy[i] = real_t(i);
-		index = real_t(i);
+		background(i) = (*spectra)(i);
+		energy(i) = real_t(i);
+		index(i) = real_t(i);
 	}
 
 	if (spectral_binning > 0)
@@ -146,22 +148,22 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		energy = energy * spectral_binning;
 	}
 
-	energy = energy_offset + energy * energy_linear + std::pow(energy, (real_t)2.0) * energy_quadratic;
+	energy = energy_offset + energy * energy_linear + energy.pow((real_t)2.0) * energy_quadratic;
 
-	std::valarray<real_t> tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
+	EArrayXr tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
 	for (size_t i = 0; i<tmp.size(); i++)
 	{
-		if (tmp[i] < 0.0)
+		if (tmp(i) < 0.0)
 		{
-			tmp[i] = 0.0;
+			tmp(i) = 0.0;
 		}
 	}
 	//std::valarray<real_t> fwhm = 2.35 * std::sqrt(tmp);
-	std::valarray<real_t> current_width = (real_t)2.35 * std::sqrt(tmp);
+	EArrayXr current_width = (real_t)2.35 * tmp.sqrt();
 
 
-	std::valarray<real_t> boxcar;
-	std::valarray<real_t> new_background;
+	EArrayXr boxcar;
+	EArrayXr new_background;
 	new_background.resize(background.size());
 	// smooth the background
 	if (spectral_binning > 0)
@@ -175,16 +177,16 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 
 	for (size_t i = 0; i<boxcar.size(); i++)
 	{
-		boxcar[i] = 1.0;
+		boxcar(i) = 1.0;
 	}
 	//convolve 1d
 	for (size_t i = 0; i< background.size(); i++)
 	{
-		new_background[i] = 0.0;
+		new_background(i) = 0.0;
 		for (size_t j = 0; j<boxcar.size(); j++)
 		{
 			if ((i - j) >= 0)
-				new_background[i] += background[i - j] * boxcar[j];
+				new_background(i) += background(i - j) * boxcar(j);
 		}
 	}
 	background = new_background / real_t(boxcar.size());
@@ -198,7 +200,10 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		current_width = current_width / (real_t)2.0;
 	}
 
-	background = std::log(std::log(background + (real_t)1.0) + (real_t)1.0);
+	background += 1.0;
+	background = background.log();
+	background += 1.0;
+	background = background.log();
 
 	// FIRST SNIPPING
 	int no_iterations = 2;
@@ -213,8 +218,8 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 	{
 		for (size_t k = 0; k<background.size(); k++)
 		{
-			real_t lo_index = k - current_width[k];
-			real_t hi_index = k + current_width[k];
+			real_t lo_index = k - current_width(k);
+			real_t hi_index = k + current_width(k);
 			if (lo_index < max_of_xmin)
 			{
 				lo_index = max_of_xmin;
@@ -223,20 +228,20 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 			{
 				hi_index = min_of_xmax;
 			}
-			real_t temp = (background[lo_index] + background[hi_index]) / 2.0;
-			if (background[k] > temp)
+			real_t temp = (background(lo_index) + background(hi_index)) / 2.0;
+			if (background(k) > temp)
 			{
-				background[k] = temp;
+				background(k) = temp;
 			}
 		}
 	}
 
-	while (current_width.max() >= 0.5)
+	while (current_width.maxCoeff() >= 0.5)
 	{
 		for (size_t k = 0; k<background.size(); k++)
 		{
-			real_t lo_index = k - current_width[k];
-			real_t hi_index = k + current_width[k];
+			real_t lo_index = k - current_width(k);
+			real_t hi_index = k + current_width(k);
 			if (lo_index < max_of_xmin)
 			{
 				lo_index = max_of_xmin;
@@ -245,23 +250,27 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 			{
 				hi_index = min_of_xmax;
 			}
-			real_t temp = (background[lo_index] + background[hi_index]) / 2.0;
-			if (background[k] > temp)
+			real_t temp = (background(lo_index) + background(hi_index)) / 2.0;
+			if (background(k) > temp)
 			{
-				background[k] = temp;
+				background(k) = temp;
 			}
 		}
 
 		current_width = current_width / real_t(M_SQRT2); // window_rf
 	}
 
-	background = std::exp(std::exp(background) - (real_t)1.0) - (real_t)1.0;
+	background -= (real_t) 1.0;
+	background = background.exp();
+	background -= (real_t) 1.0;
+	background = background.exp();
+	//background = std::exp(std::exp(background) - (real_t)1.0) - (real_t)1.0;
 
 	for (size_t i = 0; i<background.size(); i++)
 	{
-		if (std::isnan(background[i]))
+		if (std::isnan(background(i)))
 		{
-			background[i] = 0.0;
+			background(i) = 0.0;
 		}
 	}
 

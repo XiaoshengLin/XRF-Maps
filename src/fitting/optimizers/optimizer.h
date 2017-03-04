@@ -77,9 +77,9 @@ struct User_Data
 {
     Base_Model* fit_model;
     Spectra *spectra;
-    std::valarray<real_t> *weights;
+    EArrayXr weights;
     Fit_Parameters *fit_parameters;
-    std::valarray<real_t> *spectra_background;
+	EArrayXr *spectra_background;
     Fit_Element_Map_Dict *elements;
     Range *energy_range;
     //Fit_Counts_Array* counts_arr;
@@ -88,7 +88,7 @@ struct User_Data
 struct Gen_User_Data
 {
     Spectra *spectra;
-    std::valarray<real_t> *weights;
+	EArrayXr weights;
     Fit_Parameters *fit_parameters;
     Range *energy_range;
     std::function<const Spectra(Fit_Parameters*, Range*)> func;
@@ -100,6 +100,17 @@ struct Quant_User_Data
     Fit_Parameters * fit_parameters;
     std::unordered_map<std::string, Element_Quant> * quant_map;
 };
+
+void fill_user_data(User_Data &ud,
+					Fit_Parameters *fit_params,
+					const Spectra * const spectra,
+					const Fit_Element_Map_Dict * const elements_to_fit,
+					const Base_Model * const model);
+
+void fill_gen_user_data(Gen_User_Data &ud,
+						Fit_Parameters *fit_params,
+						const Spectra * const spectra,
+						std::function<const Spectra(const Fit_Parameters * const, const Range * const)> gen_func);
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model

@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "base_model.h"
 #include "optimizer.h"
 #include "fit_parameters.h"
-#include <valarray>
 
 namespace fitting
 {
@@ -122,8 +121,8 @@ public:
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
-                                                 const std::valarray<real_t> &ev,
-                                                 valarray<real_t> energy);
+                                                 const EArrayXr &ev,
+                                                 EArrayXr energy);
 
     void set_fit_params_preset(Fit_Params_Preset lock_macro);
 
@@ -136,7 +135,7 @@ public:
      * @param delta_energy
      * @return
      */
-    virtual const valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const;
+    virtual const EArrayXr peak(real_t gain, real_t sigma, EArrayXr& delta_energy) const;
 
     /**
      * @brief gauss_step : gain / 2.0 /  peak_E * erfc(delta_energy/(M_SQRT2 * sigma));
@@ -146,13 +145,13 @@ public:
      * @param peak_E
      * @return
      */
-    virtual const valarray<real_t> step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E) const;
+    virtual const EArrayXr step(real_t gain, real_t sigma, EArrayXr& delta_energy, real_t peak_E) const;
 
-    virtual const valarray<real_t> tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma) const;
+    virtual const EArrayXr tail(real_t gain, real_t sigma, EArrayXr& delta_energy, real_t gamma) const;
 
-    virtual const valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const;
+    virtual const EArrayXr elastic_peak(const Fit_Parameters * const fitp, EArrayXr ev, real_t gain) const;
 
-    virtual const valarray<real_t> compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const;
+    virtual const EArrayXr compton_peak(const Fit_Parameters * const fitp, EArrayXr ev, real_t gain) const;
 
     virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
 

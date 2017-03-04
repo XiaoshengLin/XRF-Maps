@@ -108,20 +108,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
         counts_background = keywords.background[energy];
     }
 */
-#ifdef WIN32
-	valarray<real_t> tmp_arr(0.0, energy_range->count());
-	for(const auto& itr : _element_models)
-    {
-        if(fit_params->contains(itr.first))
-        {
-			tmp_arr = itr.second;
-            Fit_Param param = fit_params->at(itr.first);
-			real_t nval = pow((real_t)10.0, param.value);
-			tmp_arr *= nval;
-            spectra_model += tmp_arr;
-        }
-    }
-#else
+
     for(const auto& itr : _element_models)
     {
         if(fit_params->contains(itr.first))
@@ -130,7 +117,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
             spectra_model += pow((real_t)10.0, param.value) * itr.second;
         }
     }
-#endif
+
 
     /*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
@@ -172,15 +159,14 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     unordered_map<string, Spectra> element_spectra;
 
     //n_pileup = 9
-    //valarray<real_t> value(0.0, energy_range.count());
-    real_t start_val = (real_t)0.0;
-    valarray<real_t> counts(start_val, energy_range.count());
+	EArrayXr counts(energy_range.count());
+	counts.setZero(energy_range.count());
 
     Fit_Parameters fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-    valarray<real_t> energy(start_val, energy_range.count());
+	EArrayXr energy(energy_range.count());
     real_t e_val = energy_range.min;
     for(int i=0, t_len = (energy_range.max - energy_range.min )+1; i < t_len; i++)
     {
@@ -188,7 +174,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         e_val += 1.0;
     }
 
-    valarray<real_t> ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
+    EArrayXr ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
 
     int i = 0;
     for(const auto& itr : (*elements_to_fit))

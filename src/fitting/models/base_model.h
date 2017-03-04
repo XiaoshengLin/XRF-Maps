@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fit_parameters.h"
 #include "fit_element_map.h"
 #include "detector.h"
-#include <valarray>
 
 namespace fitting
 {
@@ -106,18 +105,18 @@ public:
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
-                                                 const std::valarray<real_t> &ev,
-                                                 valarray<real_t> energy) = 0;
+                                                 const EArrayXr &ev,
+                                                 EArrayXr energy) = 0;
 
-    virtual const std::valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const = 0;
+    virtual const EArrayXr peak(real_t gain, real_t sigma, EArrayXr& delta_energy) const = 0;
 
-    virtual const std::valarray<real_t> step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E) const = 0;
+    virtual const EArrayXr step(real_t gain, real_t sigma, EArrayXr& delta_energy, real_t peak_E) const = 0;
 
-    virtual const std::valarray<real_t> tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma) const = 0;
+    virtual const EArrayXr tail(real_t gain, real_t sigma, EArrayXr& delta_energy, real_t gamma) const = 0;
 
-    virtual const std::valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const = 0;
+    virtual const EArrayXr elastic_peak(const Fit_Parameters * const fitp, EArrayXr ev, real_t gain) const = 0;
 
-    virtual const std::valarray<real_t> compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const = 0;
+    virtual const EArrayXr compton_peak(const Fit_Parameters * const fitp, EArrayXr ev, real_t gain) const = 0;
 
     virtual void reset_to_default_fit_params() = 0;
 

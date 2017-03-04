@@ -72,8 +72,9 @@ public:
 		_output_counts = 1.0;
 	}
 
-    Spectra_T(size_t sample_size) : Eigen::Array< _T , Eigen::Dynamic, 1 >(0.0, sample_size)
+    Spectra_T(size_t sample_size) : Eigen::Array< _T , Eigen::Dynamic, 1 >(sample_size)
 	{
+		this->setZero(sample_size);
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
 		_input_counts = 1.0;
@@ -123,9 +124,9 @@ typedef Spectra_T<real_t> Spectra;
 
 typedef Eigen::Array<real_t, Eigen::Dynamic, 1> EArrayXr;
 
-std::valarray<real_t> convolve1d(EArrayXr &arr, size_t boxcar_size);
-std::valarray<real_t> convolve1d(EArrayXr &arr, EArrayXr &boxcar);
-std::valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
+EArrayXr convolve1d(EArrayXr &arr, size_t boxcar_size);
+EArrayXr convolve1d(EArrayXr &arr, EArrayXr &boxcar);
+EArrayXr snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
 
 } //namespace xrf
 } //namespace data_struct

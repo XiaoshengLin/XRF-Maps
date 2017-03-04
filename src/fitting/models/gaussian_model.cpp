@@ -306,8 +306,9 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     Spectra spectra_model;
 
 
-    std::valarray<real_t> energy((real_t)0.0, energy_range.count());
-    //std::valarray<real_t> background_counts((real_t)0.0, energy_range.count());
+    EArrayXr energy(energy_range.count());
+	energy.setZero(energy_range.count());
+    //EArrayXr background_counts((real_t)0.0, energy_range.count());
     real_t e_val = energy_range.min;
     for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
     {
@@ -316,7 +317,8 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     }
 
     //real_t gain = detector->energy_slope();
-    std::valarray<real_t> ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + std::pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
+	EArrayXr energy_pow = energy.pow((real_t)2.0);
+    EArrayXr ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + energy_pow * fit_params->at(STR_ENERGY_QUADRATIC).value;
 
 /* move outside
     if( _snip_background )
@@ -394,13 +396,14 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 // ----------------------------------------------------------------------------
 
-const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const std::valarray<real_t> &ev, std::valarray<real_t> energy)
+const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const EArrayXr &ev, EArrayXr energy)
 {
     Spectra spectra_model(energy.size());
-    std::valarray<real_t> peak_counts(0.0, energy.size());
+    EArrayXr peak_counts(energy.size());
+	peak_counts.setZero(energy.size());
 
     //real_t gain = detector->energy_slope();
-    //std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
+    //EArrayXr ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
 
     if(false == fitp->contains(element_to_fit->full_name()))
     {
@@ -428,7 +431,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
             continue;
 
         // gaussian peak shape
-        std::valarray<real_t> delta_energy = ev - er_struct.energy;
+        EArrayXr delta_energy = ev - er_struct.energy;
 
         real_t faktor = real_t(er_struct.ratio * pre_faktor);
         if (er_struct.ptype == Element_Param_Type::Kb_Line)
@@ -488,17 +491,23 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::peak(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy) const
+const EArrayXr Gaussian_Model::peak(real_t gain, real_t sigma, EArrayXr& delta_energy) const
 {
     // gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
-    return gain / ( sigma * SQRT_2xPI ) *  std::exp((real_t)-0.5 * std::pow((delta_energy / sigma), (real_t)2.0) );
+	EArrayXr delta_e_sig = delta_energy / sigma;
+	delta_e_sig.pow((real_t) 2.0);
+	delta_e_sig *= (real_t)-0.5;
+	delta_e_sig.exp();
+	return gain / (sigma * SQRT_2xPI) * delta_e_sig;
+    //return gain / ( sigma * SQRT_2xPI ) *  std::exp((real_t)-0.5 * std::pow((delta_energy / sigma), (real_t)2.0) );
 }
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t peak_E) const
+const EArrayXr Gaussian_Model::step(real_t gain, real_t sigma, EArrayXr& delta_energy, real_t peak_E) const
 {
-    std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
+    EArrayXr counts(delta_energy.size());
+	counts.setZero(delta_energy.size());
     for (unsigned int i=0; i<delta_energy.size(); i++)
     {
         counts[i] = gain / (real_t)2.0 /  peak_E * std::erfc(delta_energy[i]/(M_SQRT2 * sigma));
@@ -508,9 +517,10 @@ const std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, std:
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t gamma) const
+const EArrayXr Gaussian_Model::tail(real_t gain, real_t sigma, EArrayXr& delta_energy, real_t gamma) const
 {
-    std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
+    EArrayXr counts(delta_energy.size());
+	counts.setZero(delta_energy.size());
 
     for (unsigned int i=0; i<delta_energy.size(); i++)
     {
@@ -526,15 +536,16 @@ const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std:
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t gain) const
+const EArrayXr Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, EArrayXr ev, real_t gain) const
 {
-    std::valarray<real_t> counts((real_t)0.0, ev.size());
+    EArrayXr counts(ev.size());
+	counts.setZero(ev.size());
     real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / 2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(std::isnan(sigma))
     {
         return counts;
     }
-    std::valarray<real_t> delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
+    EArrayXr delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
 
 
     // elastic peak, gaussian
@@ -542,7 +553,7 @@ const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * 
 
     fvalue = fvalue * std::pow(10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
 
-    //std::valarray<real_t> value = fvalue * this->peak(gain, *sigma, delta_energy);
+    //EArrayXr value = fvalue * this->peak(gain, *sigma, delta_energy);
     //counts = counts + value;
     counts += ( fvalue * this->peak(gain, sigma, delta_energy) );
 
@@ -551,9 +562,10 @@ const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * 
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t  gain) const
+const EArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, EArrayXr ev, real_t  gain) const
 {
-    std::valarray<real_t> counts((real_t)0.0, ev.size());
+    EArrayXr counts(ev.size());
+	counts.setZero(ev.size());
 
     real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / 511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
 
@@ -564,14 +576,14 @@ const std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * 
     }
     //real_t local_sigma = (*sigma) * p[14];
 
-    std::valarray<real_t> delta_energy = ev - compton_E;
+    EArrayXr delta_energy = ev - compton_E;
 
     // compton peak, gaussian
     real_t faktor = 1.0 / (1.0 + fitp->at(STR_COMPTON_F_STEP).value + fitp->at(STR_COMPTON_F_TAIL).value + fitp->at(STR_COMPTON_HI_F_TAIL).value);
 
     faktor = faktor * std::pow( 10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
 
-    std::valarray<real_t> value = faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
+    EArrayXr value = faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
     counts = counts + value;
 
     // compton peak, step

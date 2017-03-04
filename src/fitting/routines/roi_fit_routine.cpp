@@ -109,7 +109,8 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
 
         size_t spec_size = (right_roi + 1) - left_roi;
         real_t counts = 0.0;
-        counts = (*spectra)[std::slice(left_roi, spec_size, 1)].sum();
+        //counts = (*spectra)[std::slice(left_roi, spec_size, 1)].sum();
+		counts = spectra->block(left_roi, 0, spec_size, 1).sum();
 
         counts_dict[e_itr.first] = counts;
         //(*out_counts_dic)[e_itr.first][row_idx][col_idx] = counts;

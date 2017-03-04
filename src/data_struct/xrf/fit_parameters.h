@@ -50,7 +50,6 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
-#include <valarray>
 #include <limits>
 #include <math.h>
 

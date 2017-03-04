@@ -3031,8 +3031,8 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                 analysis_ids.push_back(det_analysis_dset_id);
         }
 
-        std::valarray<real_t> buffer1(total);
-        std::valarray<real_t> buffer2(total);
+        data_struct::xrf::EArrayXr buffer1(total);
+		data_struct::xrf::EArrayXr buffer2(total);
         float divisor = 1.0;
         error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
         for(int k=0; k<analysis_ids.size(); k++)
