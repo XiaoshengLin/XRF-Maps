@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //#include <QCoreApplication>
 
+#include <omp.h>
 #include <iostream>
 #include <queue>
 #include <string>
@@ -345,16 +346,31 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 
         //Initialize model
         fit_routine->initialize(&model, &override_params->elements_to_fit, energy_range);
+size_t rows = spectra_volume->rows();
+size_t cols = spectra_volume->cols();
+size_t i=0;
+size_t j=0;
+#pragma omp parallel 
+{
 
-        for(size_t i=0; i<spectra_volume->rows(); i++)
+        #pragma omp for 
+        for(; i<rows; i++)
         {
-            for(size_t j=0; j<spectra_volume->cols(); j++)
+            for(; j<cols; j++)
             {
                 //logit<< i<<" "<<j<<std::endl;
-                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
+               // fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
+ 		data_struct::xrf::Spectra * spectra = &(*spectra_volume)[i][j];
+                std::unordered_map<std::string, real_t> counts_dict = fit_routine->fit_spectra(&model, spectra, &override_params->elements_to_fit);
+                //save count / sec
+                for (auto& el_itr : override_params->elements_to_fit)
+                {
+                    (*element_fit_count_dict)[el_itr.first](i,j) = counts_dict[el_itr.first] / spectra->elapsed_lifetime();
+                }
+                (*element_fit_count_dict)[data_struct::xrf::STR_NUM_ITR](i,j) = counts_dict[data_struct::xrf::STR_NUM_ITR];
             }
         }
-
+}
         io::save_results( save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue, start );
     }
 
@@ -784,7 +800,6 @@ int main(int argc, char *argv[])
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
     size_t detector_num_end = 3;
-    //ThreadPool tp(1);
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -816,7 +831,7 @@ int main(int argc, char *argv[])
         thread_affinity = true;
     }
 
-    ThreadPool tp(num_threads, thread_affinity);
+    ThreadPool *tp = nullptr;//(num_threads, thread_affinity);
 
 
     if ( clp.option_exists("--tails") )
@@ -997,7 +1012,7 @@ int main(int argc, char *argv[])
                 optim_dataset_files.pop_back();
             }
         }
-        generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
+        generate_optimal_params(dataset_dir, optim_dataset_files, tp, detector_num_start, detector_num_end);
     }
 
     //try to load maps fit params override txt files for each detector. -1 is general one
@@ -1039,12 +1054,12 @@ int main(int argc, char *argv[])
         {
             if(quick_n_dirty)
             {
-                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
             else
             {
-                process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                io::generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+                process_dataset_file(dataset_dir, dataset_file, proc_types, tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                io::generate_h5_averages(dataset_dir, dataset_file, tp, detector_num_start, detector_num_end);
             }
 
         }
@@ -1055,7 +1070,7 @@ int main(int argc, char *argv[])
         {
             for(std::string dataset_file : dataset_files)
             {
-                io::generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+                io::generate_h5_averages(dataset_dir, dataset_file, tp, detector_num_start, detector_num_end);
             }
         }
     }

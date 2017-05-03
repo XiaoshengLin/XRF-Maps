@@ -132,8 +132,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
   if( CMAKE_CXX_COMPILER_ID MATCHES "Intel")
 #    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xmic-avx512 -qno-offload")
 #    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xmic-avx512 -qno-offload")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic ")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic ")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic -qopenmp ")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic -qopenmp ")
   endif()
  
   # Enable link time optimization and set the default symbol
