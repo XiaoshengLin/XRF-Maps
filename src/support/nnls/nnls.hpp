@@ -356,7 +356,7 @@ template <typename _T>
       }
       //showStatus();
       cleanUp();
-      fprintf(stderr, "-");
+      //fprintf(stderr, "-");
       return out.iter;
     }
 

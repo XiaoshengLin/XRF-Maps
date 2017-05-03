@@ -123,11 +123,19 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
 include(CheckCXXCompilerFlag)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
   # Enable C++11 mode on C++ / Clang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC")
+  
 
+  if( CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+#    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xmic-avx512 -qno-offload")
+#    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xmic-avx512 -qno-offload")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic ")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic ")
+  endif()
+ 
   # Enable link time optimization and set the default symbol
   # visibility to hidden (very important to obtain small binaries)
 #  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
@@ -150,7 +158,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX")
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
@@ -253,7 +261,7 @@ set(libxrf_fit_HEADERS
 )
 
 # Create the binding library
-add_library(libxrf_fit SHARED
+add_library(libxrf_fit STATIC
     #${PYBIND11_HEADERS}
     ${libxrf_fit_HEADERS}
     src/data_struct/xrf/quantification_standard.cpp
@@ -294,7 +302,7 @@ set(XRF_IO_HEADERS
         src/io/hl_file_io.h
 )
 
-add_library(libxrf_io SHARED
+add_library(libxrf_io STATIC
 	${XRF_IO_HEADERS}
 	${XDR_HACK}
 	src/support/mdautils-1.4.1/mda_loader.c
@@ -366,7 +374,7 @@ elseif (UNIX)
   set(SZIP_LIB sz)
 
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3 -mavx")
+    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
@@ -380,10 +388,19 @@ elseif (UNIX)
       add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_io.dylib)
     endif()
   else()
-    set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
-    if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-      add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
-      add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
+#    if(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+#      set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".a")
+#      if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+#        add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.a)
+#        add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.a)
+#      endif()
+#    else()
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+      set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
+      if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+        add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
+        add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
+      endif()
     endif()
   endif()
 endif()
@@ -402,6 +419,6 @@ IF (BUILD_WITH_VTK)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
 ELSE()
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()

@@ -268,7 +268,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], &mp_config, (void *) &ud, &result);
 
-    logit_s<<"*";
+    //logit_s<<"*";
 
 
     switch(info)
@@ -459,7 +459,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     struct mp_par<real_t> *mp_par = nullptr;
 
     info = mpfit(gen_residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
-    logit_s<<"*";
+  //  logit_s<<"*";
 
 
   //  delete [] mp_par;

@@ -231,7 +231,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     /* perform the fit */
     //printf( "Fitting:\n" );
     lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, residuals_lmfit, &control, &status );
-	printf(".");
+//	printf(".");
     /* print results */
     //printf( "\nResults:\n" );
     //printf( "status after %d function evaluations:\n  %s\n",  status.nfev, lm_infmsg[status.outcome] );
@@ -273,7 +273,7 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
 
     lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, general_residuals_lmfit, &control, &status );
-    printf(".");
+    //printf(".");
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
@@ -303,7 +303,7 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals, &control, &status );
-    printf(".");
+ //   printf(".");
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
