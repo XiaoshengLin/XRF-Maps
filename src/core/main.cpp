@@ -348,15 +348,21 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
         fit_routine->initialize(&model, &override_params->elements_to_fit, energy_range);
 size_t rows = spectra_volume->rows();
 size_t cols = spectra_volume->cols();
-size_t i=0;
-size_t j=0;
-#pragma omp parallel 
+int tid, nthreads;
+#pragma omp parallel shared(nthreads) private(tid)
 {
+	tid = omp_get_thread_num();
+	if (tid == 0)
+	{
+		nthreads = omp_get_num_threads();
+		logit<<"Number of threads = "<<nthreads<<std::endl;
+	}
+
 
         #pragma omp for 
-        for(; i<rows; i++)
+        for(int i = 0; i<rows; i++)
         {
-            for(; j<cols; j++)
+            for(int j = 0; j<cols; j++)
             {
                 //logit<< i<<" "<<j<<std::endl;
                // fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );

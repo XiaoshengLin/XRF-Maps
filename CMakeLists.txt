@@ -130,10 +130,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
   
 
   if( CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-#    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xmic-avx512 -qno-offload")
-#    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xmic-avx512 -qno-offload")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic -qopenmp ")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic -qopenmp ")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic -openmp ")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic -openmp ")
   endif()
  
   # Enable link time optimization and set the default symbol
@@ -157,7 +155,7 @@ if(MSVC)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX")
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
