@@ -831,6 +831,32 @@ void generate_h5_averages(std::string dataset_directory,
 
 }
 
+
+// ----------------------------------------------------------------------------
+
+void add_exchange_h5(std::string dataset_directory,
+                     std::string dataset_file,
+                     size_t detector_num_start,
+                     size_t detector_num_end)
+{
+    logit<<"\n";
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        io::file::HDF5_IO::inst()->add_exchange(dataset_directory+"img.dat/"+dataset_file+".h5"+std::to_string(detector_num));
+    }
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+
+}
+
 // ----------------------------------------------------------------------------
 
 std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str)

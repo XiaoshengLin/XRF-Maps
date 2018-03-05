@@ -194,6 +194,8 @@ public:
 
     bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
 
+    bool add_exchange(std::string filename);
+
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
     bool generate_stream_dataset(std::string dataset_directory,

@@ -67,6 +67,7 @@ Analysis_Job::Analysis_Job()
     quick_and_dirty = false;
     optimize_fit_override_params = false;
     generate_average_h5 = false;
+    add_exchange_h5 = false;
     is_network_source = false;
     stream_over_network = false;
     command_line = "";

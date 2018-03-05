@@ -193,6 +193,10 @@ int main(int argc, char *argv[])
         analysis_job.generate_average_h5 = true;
     }
 
+    if(clp.option_exists("--add-exchange"))
+    {
+        analysis_job.add_exchange_h5 = true;
+    }
 
     if(clp.option_exists("--confocal"))
     {
@@ -365,6 +369,15 @@ int main(int argc, char *argv[])
             io::populate_netcdf_hdf5_files(dataset_dir);
             process_dataset_files(&analysis_job);
             analysis_job.generate_average_h5 = true;
+        }
+
+        //average all detectors to one files
+        if(analysis_job.add_exchange_h5)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::add_exchange_h5(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
         }
 
         //average all detectors to one files

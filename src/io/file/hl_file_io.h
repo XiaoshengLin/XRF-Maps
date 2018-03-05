@@ -123,6 +123,11 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
                           size_t detector_num_start,
                           size_t detector_num_end);
 
+DLL_EXPORT void add_exchange_h5(std::string dataset_directory,
+                                std::string dataset_file,
+                                size_t detector_num_start,
+                                size_t detector_num_end);
+
 DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::Fitting_Routines proc_type,
                                                                      fitting::optimizers::Optimizer* optimizer);
 

@@ -140,6 +140,8 @@ public:
 
     bool generate_average_h5;
 
+    bool add_exchange_h5;
+
     bool is_network_source;
 
     bool stream_over_network;

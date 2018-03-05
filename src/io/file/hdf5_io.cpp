@@ -5242,6 +5242,35 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::add_exchange(std::string filename)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    logit  << filename << "\n";
+
+    hid_t status, exchange_grp_id;
+    hid_t    file_id;
+    file_id = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+
+    if(file_id < 1)
+        return false;
+
+    exchange_grp_id = H5Gcreate(file_id, "exchange", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(exchange_grp_id > -1)
+    {
+        status = H5Lcreate_soft("/MAPS/Scan/x_axis", exchange_grp_id, "x_axis", H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Lcreate_soft("/MAPS/Scan/y_axis", exchange_grp_id, "y_axis", H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Lcreate_soft("/MAPS/Scan/Extra_PVs/Names", exchange_grp_id, "extra_pvs", H5P_DEFAULT, H5P_DEFAULT);
+
+        H5Gclose(exchange_grp_id);
+    }
+
+    H5Fclose(file_id);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg)
 {
     std::lock_guard<std::mutex> lock(_mutex);
